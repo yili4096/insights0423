@@ -1,0 +1,36 @@
+<!doctype html>
+<html ng-app="territoryApp" class="vv-{{$root.topicArea}}">
+<head>
+    <base ng-if="$root.win8" href="{{::$root.base}}" target="_self">
+    <meta charset="utf-8">
+    <meta name="app-version" content="${version}"/>
+    <meta name="viewport" content="width=device-width"/>
+
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+
+<div ng-controller="MainCtrl as main" class="no-select-highlight">
+    <!-- <div class="navigator" ng-if="main.reportLanded">
+        <div class="main-view" ng-if="main.mainNavigation">
+            <div class="title clickable" ng-repeat="report in main.getAccessibleReports()" ng-class="main.applyActiveStyle($index)"
+                 ng-click="main.switchReport($index)">{{report.name | message}}</div>
+        </div>
+        <div class="detail-view" ng-if="!main.mainNavigation">
+            <div class="control" ng-click="main.goToMainNavigation()">
+                <i class="icon fa fa-angle-left"></i>
+            </div>
+            <div class="title">{{main.detailViewTitle}}</div>
+        </div>
+    </div> -->
+    <div ng-view></div>
+</div>
+
+<script src="scripts/vendor.js"></script>
+
+<script src="scripts/lib.js"></script>
+
+<script src="scripts/app.js"></script>
+
+</body>
+</html>
