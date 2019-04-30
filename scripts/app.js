@@ -1909,10 +1909,10 @@
                                 return value < 50 ?  value : '50+';
                             }
                         },
-                        gridLines: {
-                            color: 'rgba(236,239,241,1)',
-                            tickMarkLength: 0
-                        },
+                        // gridLines: {
+                        //     color: 'rgba(236,239,241,1)',
+                        //     tickMarkLength: 0
+                        // },
                         stacked: true
                     }]
                 },
@@ -1941,15 +1941,15 @@
                     data: formatData(scope.data[1])
                 });
             }
-            if(scope.data && scope.data[0]) {
-                chartData.datasets.unshift({
-                    type: 'line',
-                    fill: false,
-                    borderColor: 'rgba(207,219,0,1)',
-                    pointStyle: 'line',
-                    data: formatData(scope.data[0])
-                });
-            }
+            // if(scope.data && scope.data[0]) {
+            //     chartData.datasets.unshift({
+            //         type: 'line',
+            //         fill: false,
+            //         borderColor: 'rgba(207,219,0,1)',
+            //         pointStyle: 'line',
+            //         data: formatData(scope.data[0])
+            //     });
+            // }
 
             var ctx = document.getElementById("barChart");
             var barChart = new Chart(ctx, {
@@ -3454,7 +3454,7 @@ angular.module('territoryApp').run(['$templateCache', function($templateCache) {
     "    <div class=\"call-summary-section-1\">\n" +
     "        <div class=\"table structure-table\">\n" +
     "            <div class=\"cell half section-container\">\n" +
-    "                <div class=\"section-title\">{{'reach' | message}}</div>\n" +
+    "                <div class=\"section-title\">Calls information</div>\n" +
     "                <div class=\"section-body inline-block-container\" ng-if=\"call.mainDataReady\">\n" +
     // "                    <div class=\"align-top\">\n" +
     // "                        <doughnut-chart ng-style=\"call.getDoughnutStyle()\" color1=\"#ff5575\" color2=\"#8b123a\"\n" +
@@ -3484,7 +3484,7 @@ angular.module('territoryApp').run(['$templateCache', function($templateCache) {
     "\n" +
     "    <div class=\"call-summary-section-2\">\n" +
     "        <div class=\"section-container\">\n" +
-    "            <div class=\"section-title\">{{'callFrequencyTrend' | message}}</div>\n" +
+    "            <div class=\"section-title\">No. Calls in different status</div>\n" +
     "            <div class=\"section-body\" ng-if=\"call.mainDataReady\">\n" +
     "                <div class=\"table structure-table\">\n" +
     "                    <div class=\"cell half align-top\">\n" +
