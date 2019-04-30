@@ -1265,27 +1265,28 @@
          * @param dataAvg
          * @returns {{labels: string[], data: Array}}
          */
-        reportUtil.generateDailyFrequencyChartData = function(voc, dateKey, dataAvg) {
-            // var voc = {planned:0, submitted:0, saved:0, total:0,};
-            // angular.forEach(data, function(cDetail) {
-            //     if(cDetail.Status_vod__c === 'Planned_vod') {
-            //         voc.planned += 1;
-            //     } else if (cDetail.Status_vod__c === 'Submitted_vod') {
-            //         voc.submitted += 1;
-            //     } else if(cDetail.Status_vod__c === 'Saved_vod') {
-            //         voc.saved += 1;
-            //     }
-            //     voc.total += 1;
-            // });
+        reportUtil.generateDailyFrequencyChartData = function(data, dateKey, dataAvg) {
+            var voc = {planned:0, submitted:0, saved:0, total:0};
 
-
+            var calls = data || [];
+            angular.forEach(calls, function(cDetail) {
+                if(cDetail["Status_vod__c"].value === 'Planned_vod') {
+                    voc.planned += 1;
+                } else if (cDetail["Status_vod__c"].value === 'Submitted_vod') {
+                    voc.submitted += 1;
+                } else if(cDetail["Status_vod__c"].value === 'Saved_vod') {
+                    voc.saved += 1;
+                }
+                voc.total += 1;
+            });
             var chartData = [];
             // planned:0, submitted:0, saved:0, total:0,};
-            var callGroup = [3, 2, 5];
+            // var callGroup = [3, 2, 5];
+            var callGroup = [voc.planned, voc.submitted, voc.saved];
             chartData.push(callGroup);
             chartData.push(callGroup);
 
-            var lastTitle = JSON.stringify(voc);
+            var lastTitle = JSON.stringify(calls);
             if (lastTitle.length > 80) {
                 lastTitle =  lastTitle.substr(0, 80);
             }
@@ -1294,6 +1295,28 @@
                 // labels: ["Planned", "Submmited", lastTitle],
                 data: chartData
             };
+            // var dataByWeekday = groupDataByWeekday(data, dateKey);
+            // var chartData = [];
+            // var dataAverage = [];
+            // var dataFrequency = [];
+
+            // for(var i = 0; i < 7; i++) {
+            //     dataAverage[i] = dataAvg;
+
+            //     if(!dataByWeekday[i]) {
+            //         dataFrequency[i] = 0;
+            //     } else {
+            //         dataFrequency[i] = dataByWeekday[i].length;
+            //     }
+            // }
+
+            // chartData.push(dataAverage);
+            // chartData.push(dataFrequency);
+
+            // return {
+            //     labels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+            //     data: chartData
+            // };
         };
 
         /**
@@ -1465,6 +1488,7 @@
 
             return dataByWeekday;
         }
+
 
         /**
          * Group the data collection by weeks based on the given dateKey property
@@ -1846,166 +1870,6 @@
         };
     }
 })();
-(function() {
-    'use strict';
-
-    angular.module('territoryApp')
-        .directive('approvedEmailActivityFilter', directiveFn);
-
-    function directiveFn() {
-        var controller = ['$scope', 'sentEmailService', 'accountService', 'territoryService', 'productService', 'reportUtil', 'filterType', 'messageService',
-            function($scope, sentEmailService, accountService, territoryService, productService, reportUtil, filterType, messageService) {
-                var filter = this;
-
-                function initialize() {
-                    // data collection
-                    filter.territories = [];
-                    filter.mySetupProducts = [];
-
-                    // data models
-                    filter.startDate = sentEmailService.getStartDate();
-                    filter.endDate = sentEmailService.getEndDate();
-                    filter.fixedStartDate = sentEmailService.getFixedStartDate();
-                    filter.fixedEndDate = sentEmailService.getFixedEndDate();
-                    filter.selectedTerritory = null;
-                    filter.selectedMySetupProduct = null;
-
-                    // filter record
-                    filter.filterRecords = {};
-
-                    getTerritories();
-                    getMySetupProducts();
-                }
-
-                /**
-                 *  Local functions
-                 */
-                filter.processDateRangeUpdate = function(startDate, endDate) {
-                    sentEmailService.fetchSentEmailData(startDate, endDate).then(function(resp) {
-                        filter.filterRecords[filterType.dateRangePicker.value] = resp.data;
-
-                        $scope.sentEmailDataUpdate({
-                            sentEmails: applyAllFiltersOnSentEmails()
-                        });
-                    });
-                };
-
-                filter.territoryUpdate = function() {
-                    if(filter.selectedTerritory) {
-                        if(filter.selectedTerritory.Id) {
-                            accountService.fetchAccountForTerritory([filter.selectedTerritory.Id.value]).then(function(resp) {
-                                $scope.accountDataUpdate({
-                                    accounts: resp.data
-                                });
-                            });
-                        } else {
-                            $scope.accountDataUpdate({
-                                accounts: accountService.getAllAccounts()
-                            });
-                        }
-                    }
-                };
-
-                filter.productUpdate = function() {
-                    var productId = null;
-                    if(filter.selectedMySetupProduct.Product_vod__c) {
-                        productId = filter.selectedMySetupProduct.Product_vod__c.value;
-                    }
-                    filter.filterRecords[filterType.product.value] = sentEmailService.getSentEmailsForProductId(productId);
-
-                    $scope.sentEmailDataUpdate({
-                        sentEmails: applyAllFiltersOnSentEmails()
-                    });
-                };
-
-                /**
-                 *  Private functions
-                 */
-                function getTerritories() {
-                    var userTerritories = territoryService.getUserTerritories();
-                    var allTerritories = territoryService.getAllTerritories();
-                    var territories = [];
-
-                    angular.forEach(userTerritories, function(uTerritory) {
-                        if(uTerritory.TerritoryId) {
-                            var userTerritoryId = uTerritory.TerritoryId.value;
-                            var foundTerritory = _.find(allTerritories, function(territory) {
-                                return territory.Id && territory.Id.value === userTerritoryId;
-                            });
-
-                            if(foundTerritory) {
-                                territories.push(foundTerritory);
-                            }
-                        }
-                    });
-
-                    territories = reportUtil.sortByValue(territories, 'Name');
-                    territories.unshift({
-                        Name: {
-                            display: messageService.getMessage('territory') + ' (' + messageService.getMessage('all') + ')'
-                        }
-                    });
-
-                    filter.territories = territories;
-                    filter.selectedTerritory = filter.territories[0];
-                }
-
-                function getMySetupProducts() {
-                    var mySetupProducts = productService.getMySetupProducts();
-                    mySetupProducts = reportUtil.sortByValue(mySetupProducts, 'productName');
-                    mySetupProducts.unshift({
-                        productName: {
-                            display: messageService.getMessage('product') + ' (' + messageService.getMessage('all') + ')'
-                        }
-                    });
-
-                    filter.mySetupProducts = mySetupProducts;
-                    filter.selectedMySetupProduct = filter.mySetupProducts[0];
-                }
-
-                function applyAllFiltersOnSentEmails() {
-                    console.log('SentEmails combo filter:');
-                    console.log(filter.filterRecords);
-
-                    var rollOverSentEmailsRecord = [];
-                    var skip = false;
-                    var iteration = 1;
-
-                    angular.forEach(filter.filterRecords, function(currentSentEmailsRecord) {
-                        if(angular.isArray(currentSentEmailsRecord) && !skip) {
-                            // If one of the filter result is empty, skip the rest(final result will be empty)
-                            if(currentSentEmailsRecord.length === 0) {
-                                rollOverSentEmailsRecord = [];
-                                skip = true;
-
-                            } else if(iteration === 1) {
-                                rollOverSentEmailsRecord = currentSentEmailsRecord;
-
-                            } else {
-                                rollOverSentEmailsRecord = reportUtil.findCommonItems(rollOverSentEmailsRecord, currentSentEmailsRecord, 'Id');
-                            }
-                        }
-                        iteration += 1;
-                    });
-
-                    return rollOverSentEmailsRecord;
-                }
-
-                initialize();
-            }];
-
-        return {
-            templateUrl: 'views/approved-email-activity-filter.html',
-            restrict: 'E',
-            scope: {
-                sentEmailDataUpdate: '&',
-                accountDataUpdate: '&'
-            },
-            controller: controller,
-            controllerAs: 'filter'
-        };
-    }
-})();
 
 (function() {
     'use strict';
@@ -2038,11 +1902,11 @@
                     }],
                     yAxes: [{
                         ticks: {
-                            max: 5,
+                            max: 50,
                             min: 0,
-                            stepSize: 1,
+                            stepSize: 10,
                             callback: function(value) {
-                                return value < 5 ?  value : '5+';
+                                return value < 50 ?  value : '50+';
                             }
                         },
                         gridLines: {
@@ -2062,8 +1926,8 @@
 
             function formatData(data) {
                 return _.map(data, function(num) {
-                    if(num > 5) {
-                        return 5;
+                    if(num > 50) {
+                        return 50;
                     }
                     return num;
                 });
@@ -3008,8 +2872,9 @@
         }
 
         function updateDailyFrequencyChartData() {
-            // var calls = getCallsFromFilteredAccount();
+            var calls = getCallsFromFilteredAccount();
 
+            // call.calls
             // var totalDays = reportUtil.countDaysInBetween(callService.getStartDate(), callService.getEndDate());
             // call.avgCallsPerDay = totalDays === 0 ? 0 : Math.round(10 * calls.length / totalDays)/10;
 
@@ -3021,9 +2886,10 @@
             // }, function(resp) {
             //     callDataDeferred.reject(resp);
             // });
-            var voc = groupCallsByStatus();
-            voc = call.calls;
-            var newChartData = reportUtil.generateDailyFrequencyChartData(voc, 'Call_Date_vod__c', call.avgCallsPerDay);
+            // var calls = groupCallsByStatus();
+            // calls = call.calls;
+            // Status_vod__c
+            var newChartData = reportUtil.generateDailyFrequencyChartData(calls, 'Call_Date_vod__c', call.avgCallsPerDay);
             call.frequencyChart[0] = _.extendOwn(call.frequencyChart[0], newChartData);
         }
 
@@ -3456,8 +3322,6 @@
         var main = this;
         var reports = [{
             name: 'callActivity'
-        }, {
-            name: 'approvedEmailActivity'
         }];
         var accessibleReports = [];
 
@@ -3603,18 +3467,18 @@ angular.module('territoryApp').run(['$templateCache', function($templateCache) {
     "                    </div>\n" +
     "                </div>\n" +
     "            </div>\n" +
-    "            <div class=\"cell half section-container\">\n" +
-    "                <div class=\"section-title\">{{'frequency' | message}}</div>\n" +
-    "                <div class=\"section-body inline-block-container\" ng-if=\"call.mainDataReady\">\n" +
-    "                    <div class=\"align-top\">\n" +
-    "                        <div class=\"summarize-digit\">{{call.getAverageCallDetailPerAccount()}}</div>\n" +
-    "                        <div>{{'avgDetailsHcp' | message}}</div>\n" +
-    "                    </div>\n" +
+    // "            <div class=\"cell half section-container\">\n" +
+    // "                <div class=\"section-title\">{{'frequency' | message}}</div>\n" +
+    // "                <div class=\"section-body inline-block-container\" ng-if=\"call.mainDataReady\">\n" +
     // "                    <div class=\"align-top\">\n" +
-    // "                        <report-table headers=\"call.productFrequencyTable.headers\" data=\"call.productFrequencyTable.data\"></report-table>\n" +
+    // "                        <div class=\"summarize-digit\">{{call.getAverageCallDetailPerAccount()}}</div>\n" +
+    // "                        <div>{{'avgDetailsHcp' | message}}</div>\n" +
     // "                    </div>\n" +
-    "                </div>\n" +
-    "            </div>\n" +
+    // // "                    <div class=\"align-top\">\n" +
+    // // "                        <report-table headers=\"call.productFrequencyTable.headers\" data=\"call.productFrequencyTable.data\"></report-table>\n" +
+    // // "                    </div>\n" +
+    // "                </div>\n" +
+    // "            </div>\n" +
     "        </div>\n" +
     "    </div>\n" +
     "\n" +
@@ -3643,11 +3507,11 @@ angular.module('territoryApp').run(['$templateCache', function($templateCache) {
     // "                                </span>\n" +
     // "                            </div>\n" +
     // "                        </div>\n" +
-    "                    </div>\n" +
-    "                    <div class=\"cell half align-top\">\n" +
-    "                        <report-table headers=\"call.callFrequencyTable.headers\" data=\"call.callFrequencyTable.data\"\n" +
-    "                                      clickable=\"true\" row-click-handler=\"call.goToAccountDetailView\"></report-table>\n" +
-    "                    </div>\n" +
+    // "                    </div>\n" +
+    // "                    <div class=\"cell half align-top\">\n" +
+    // "                        <report-table headers=\"call.callFrequencyTable.headers\" data=\"call.callFrequencyTable.data\"\n" +
+    // "                                      clickable=\"true\" row-click-handler=\"call.goToAccountDetailView\"></report-table>\n" +
+    // "                    </div>\n" +
     "                </div>\n" +
     "            </div>\n" +
     "        </div>\n" +
